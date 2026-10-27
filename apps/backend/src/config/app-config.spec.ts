@@ -26,6 +26,18 @@ describe('loadConfig', () => {
     ]);
   });
 
+  it('acepta a la vez el dominio propio y el dominio gratuito de Cloudflare', () => {
+    const config = loadConfig(
+      { FRONTEND_EXTRA_ORIGINS: 'https://wslab.galetics.lat/,https://wslab.2302073.workers.dev/' },
+      { detectLocalNetwork: false },
+    );
+    expect(config.frontendOrigins).toEqual([
+      'http://localhost:3000',
+      'https://wslab.galetics.lat',
+      'https://wslab.2302073.workers.dev',
+    ]);
+  });
+
   it('quita la barra final de PUBLIC_BASE_URL', () => {
     expect(loadConfig({ PUBLIC_BASE_URL: 'http://127.0.0.1:5000/' }).publicBaseUrl).toBe(
       'http://127.0.0.1:5000',
