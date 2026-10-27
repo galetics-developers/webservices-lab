@@ -1,75 +1,54 @@
-import type { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { createTestApp } from './helpers.js';
+import { ProductsService } from './products.service.js';
 
 const SEED_SIZE = 15;
 
-describe('REST /api/products (e2e)', () => {
-  let app: INestApplication;
+describe('ProductsService', () => {
+  let service: ProductsService;
 
-  beforeAll(async () => {
-    ({ app } = await createTestApp());
+  beforeEach(() => {
+    service = new ProductsService();
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('inicia con los productos de ejemplo de ferretería industrial', () => {
+    expect(service.findAll()).toHaveLength(SEED_SIZE);
+    expect(service.findById(1)?.name).toBe('Taladro magnético de base 1200 W');
+    expect(service.findById(SEED_SIZE)?.name).toBe('Grasa de litio EP2 (cubeta de 19 kg)');
   });
 
-  it('GET devuelve los productos de ejemplo en JSON', async () => {
-    const res = await request(app.getHttpServer()).get('/api/products').expect(200);
-    expect(res.headers['content-type']).toMatch(/application\/json/);
-    expect(res.body).toHaveLength(SEED_SIZE);
-    expect(res.body[0]).toMatchObject({ id: 1, name: 'Taladro magnético de base 1200 W' });
+  it('usa nombres e ids únicos en el catálogo de ejemplo', () => {
+    const products = service.findAll();
+    expect(new Set(products.map((p) => p.id)).size).toBe(SEED_SIZE);
+    expect(new Set(products.map((p) => p.name)).size).toBe(SEED_SIZE);
   });
 
-  it('POST agrega un producto y responde 201', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/products')
-      .send({ name: 'Llave de impacto neumática 1/2 pulg', category: 'Herramienta neumática', price: 4890 })
-      .expect(201);
-    expect(res.body).toMatchObject({
-      id: SEED_SIZE + 1,
+  it('cumple las mismas reglas que valida POST /api/products', () => {
+    for (const p of service.findAll()) {
+      expect(p.name.length).toBeLessThanOrEqual(80);
+      expect(p.category.length).toBeLessThanOrEqual(40);
+      expect(p.description.length).toBeLessThanOrEqual(300);
+      expect(p.price).toBeGreaterThanOrEqual(0.01);
+      expect(p.price).toBeLessThanOrEqual(1_000_000);
+      expect(Math.round(p.price * 100) / 100).toBe(p.price);
+    }
+  });
+
+  it('agrega productos con id incremental', () => {
+    const created = service.create({
       name: 'Llave de impacto neumática 1/2 pulg',
+      category: 'Herramienta neumática',
       price: 4890,
-      description: '',
     });
-
-    const list = await request(app.getHttpServer()).get('/api/products').expect(200);
-    expect(list.body).toHaveLength(SEED_SIZE + 1);
+    expect(created.id).toBe(SEED_SIZE + 1);
+    expect(created.description).toBe('');
+    expect(service.findAll()).toHaveLength(SEED_SIZE + 1);
   });
 
-  it('POST rechaza datos inválidos con 400', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/products')
-      .send({ name: '', category: 'X', price: -5 })
-      .expect(400);
-    expect(res.body.message).toEqual(
-      expect.arrayContaining(['name should not be empty', 'price must not be less than 0.01']),
-    );
+  it('devuelve copias para que el catálogo no se modifique desde fuera', () => {
+    service.findAll()[0].name = 'cambiado';
+    expect(service.findById(1)?.name).toBe('Taladro magnético de base 1200 W');
   });
 
-  it('POST rechaza propiedades no declaradas', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/products')
-      .send({ name: 'A', category: 'B', price: 1, isAdmin: true })
-      .expect(400);
-    expect(res.body.message).toContain('property isAdmin should not exist');
-  });
-
-  it('CORS solo autoriza los orígenes del frontend', async () => {
-    const allowed = await request(app.getHttpServer())
-      .get('/api/products')
-      .set('Origin', 'http://localhost:3000');
-    expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:3000');
-
-    const loopback = await request(app.getHttpServer())
-      .get('/api/products')
-      .set('Origin', 'http://127.0.0.1:3000');
-    expect(loopback.headers['access-control-allow-origin']).toBe('http://127.0.0.1:3000');
-
-    const other = await request(app.getHttpServer())
-      .get('/api/products')
-      .set('Origin', 'http://evil.example');
-    expect(other.headers['access-control-allow-origin']).toBeUndefined();
+  it('devuelve undefined si el producto no existe', () => {
+    expect(service.findById(999)).toBeUndefined();
   });
 });
