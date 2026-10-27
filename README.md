@@ -60,20 +60,6 @@ cp .env.example .env
 
 En Windows (PowerShell): `Copy-Item .env.example .env`.
 
-| Variable | Usada por | Valor por defecto | Descripción |
-|---|---|---|---|
-| `BACKEND_PORT` | backend y frontend | `4000` | Puerto del backend |
-| `PUBLIC_BASE_URL` | backend | `http://localhost:4000` | URL que aparece en el WSDL y en el RSS, y que usan los clientes propios |
-| `FRONTEND_EXTRA_ORIGINS` | backend y frontend | vacío | Orígenes adicionales separados por comas (por ejemplo un dominio). `localhost`, `127.0.0.1` y las IP de la red local del equipo en el puerto 3000 ya están permitidos |
-| `HTTP_TIMEOUT_MS` | backend | `8000` | Tiempo de espera de las solicitudes salientes |
-| `OPEN_METEO_BASE_URL` | backend | API de Open-Meteo | Servicio REST externo |
-| `COUNTRY_INFO_WSDL_URL` | backend | WSDL de CountryInfoService | Servicio SOAP externo |
-| `COUNTRY_INFO_ENDPOINT` | backend | Dirección HTTPS de CountryInfoService | Dirección usada para invocar el servicio SOAP |
-| `EXTERNAL_RSS_URL` | backend | BBC News Mundo | Feed RSS externo |
-| `NEXT_PUBLIC_API_URL` | frontend | vacío | URL del backend para el navegador. Si está vacía, se usa el mismo host desde el que se abrió la página con el puerto `BACKEND_PORT`; así funciona igual en `localhost` y en la IP de la red local |
-
-`NEXT_PUBLIC_API_URL` y `BACKEND_PORT` se incorporan al frontend al compilar o al iniciar `next dev`; después de cambiarlas, reinicie `pnpm dev` o vuelva a ejecutar `pnpm build`.
-
 Ningún servicio requiere credenciales. El archivo `.env` está excluido de git; solo se versiona `.env.example`.
 
 ### Abrir el frontend desde la red local
