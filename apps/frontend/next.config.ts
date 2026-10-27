@@ -49,6 +49,7 @@ function localIpv4Addresses(): string[] {
 }
 
 const nextConfig: NextConfig = {
+  output: setting('NEXT_OUTPUT') === 'export' ? 'export' : undefined,
   transpilePackages: ['@wslab/shared'],
   poweredByHeader: false,
   agentRules: false,

@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: wslab-backend
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm install -g pnpm@10.28.0 && pnpm install --frozen-lockfile && pnpm --filter @wslab/shared build && pnpm --filter @wslab/backend build
+    startCommand: node apps/backend/dist/main.js
+    healthCheckPath: /api/products
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: BACKEND_PORT
+        value: "10000"
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: FRONTEND_EXTRA_ORIGINS
+        sync: false
+      - key: HTTP_TIMEOUT_MS
+        value: "8000"
+      - key: OPEN_METEO_BASE_URL
+        value: https://api.open-meteo.com/v1/forecast
+      - key: COUNTRY_INFO_WSDL_URL
+        value: http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL
+      - key: COUNTRY_INFO_ENDPOINT
+        value: http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso
+      - key: EXTERNAL_RSS_URL
+        value: https://feeds.bbci.co.uk/mundo/rss.xml
