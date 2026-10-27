@@ -104,7 +104,7 @@ Primero inicie el backend (`pnpm dev` o `pnpm build && pnpm start`). En PowerShe
 
 ```bash
 curl -i http://localhost:4000/api/products
-curl -i -X POST http://localhost:4000/api/products -H "Content-Type: application/json" -d "{\"name\":\"Mouse inalámbrico\",\"category\":\"Periféricos\",\"price\":349.99}"
+curl -i -X POST http://localhost:4000/api/products -H "Content-Type: application/json" -d "{\"name\":\"Mouse inalámbrico\",\"category\":\"Periféricos\",\"price\":349.99} " 
 curl -i -X POST http://localhost:4000/api/products -H "Content-Type: application/json" -d "{\"name\":\"\",\"price\":-1,\"admin\":true}"
 ```
 

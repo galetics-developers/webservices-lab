@@ -4,6 +4,8 @@ import * as soap from 'soap';
 import request from 'supertest';
 import { createTestApp } from './helpers.js';
 
+const SEED_SIZE = 15;
+
 describe('SOAP /soap/products (e2e)', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -37,15 +39,19 @@ describe('SOAP /soap/products (e2e)', () => {
   it('ListProducts devuelve los productos', async () => {
     const client: any = await soap.createClientAsync(`${baseUrl}/soap/products?wsdl`);
     const [result, rawResponse] = await client.ListProductsAsync({});
-    expect(result.product).toHaveLength(3);
-    expect(result.product[0]).toMatchObject({ id: 1, name: 'Teclado mecánico' });
+    expect(result.product).toHaveLength(SEED_SIZE);
+    expect(result.product[0]).toMatchObject({ id: 1, name: 'Taladro magnético de base 1200 W' });
     expect(rawResponse).toContain('<ListProductsResponse');
   });
 
   it('GetProductById devuelve un producto (node-soap convierte xsd:int y xsd:decimal)', async () => {
     const client: any = await soap.createClientAsync(`${baseUrl}/soap/products?wsdl`);
     const [result] = await client.GetProductByIdAsync({ id: 2 });
-    expect(result.product).toMatchObject({ id: 2, name: 'Monitor 24 pulgadas', price: 3499.9 });
+    expect(result.product).toMatchObject({
+      id: 2,
+      name: 'Llave de torque hidráulica 3/4 pulg',
+      price: 32780.5,
+    });
   });
 
   it('GetProductById responde SOAP Fault si el producto no existe', async () => {

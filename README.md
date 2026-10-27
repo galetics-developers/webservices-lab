@@ -140,6 +140,10 @@ webservices-lab/
 - [docs/testing.md](docs/testing.md): endpoints, comandos y resultados de las pruebas ejecutadas.
 - [docs/experience.md](docs/experience.md): guía para explicar la experiencia en la presentación.
 
+## Integración continua
+
+`.github/workflows/ci.yml` se ejecuta en cada pull request hacia `main` y en cada push a `main`. Comprueba tipos, pruebas, compilación y la exportación estática que usa Cloudflare. `pnpm audit` se muestra como información y no bloquea la integración.
+
 ## Publicación en GitHub
 
 El repositorio local ya está inicializado con un primer commit. Para publicarlo:

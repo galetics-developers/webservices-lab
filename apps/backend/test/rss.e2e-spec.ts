@@ -4,6 +4,8 @@ import request from 'supertest';
 import { parseRss } from '../src/consumers/rss-parser.js';
 import { createTestApp } from './helpers.js';
 
+const SEED_SIZE = 15;
+
 describe('RSS /rss/products.xml (e2e)', () => {
   let app: INestApplication;
 
@@ -23,15 +25,17 @@ describe('RSS /rss/products.xml (e2e)', () => {
 
     const feed = parseRss(res.text);
     expect(feed.title).toBe('webservices-lab: productos de ejemplo');
-    expect(feed.items.map((i) => i.guid)).toEqual(['product-1', 'product-2', 'product-3']);
+    expect(feed.items.map((i) => i.guid)).toEqual(
+      Array.from({ length: SEED_SIZE }, (_, i) => `product-${i + 1}`),
+    );
   });
 
   it('refleja los productos agregados por REST', async () => {
     await request(app.getHttpServer())
       .post('/api/products')
-      .send({ name: 'Audífonos', category: 'Audio', price: 599 })
+      .send({ name: 'Careta para esmerilar con visor de policarbonato', category: 'Seguridad industrial', price: 599 })
       .expect(201);
     const res = await request(app.getHttpServer()).get('/rss/products.xml').expect(200);
-    expect(parseRss(res.text).items.at(-1)?.title).toBe('Audífonos');
+    expect(parseRss(res.text).items.at(-1)?.title).toBe('Careta para esmerilar con visor de policarbonato');
   });
 });

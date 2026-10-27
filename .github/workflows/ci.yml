@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        run: pnpm typecheck
+      - name: Tests
+        id: tests
+        continue-on-error: true
+        run: pnpm test
+      - name: Build
+        id: build
+        continue-on-error: true
+        run: pnpm build
+      - name: Static export build
+        id: export
+        continue-on-error: true
+        env:
+          NEXT_OUTPUT: export
+          NEXT_PUBLIC_API_URL: https://example.invalid
+        run: |
+          set -euo pipefail
+          pnpm --filter @wslab/frontend build
+          test -f apps/frontend/out/index.html
+          test -f apps/frontend/out/_headers
+      - name: Dependency audit
+        id: dependency-audit
+        continue-on-error: true
+        run: pnpm audit --audit-level=moderate
+      - name: Summarize validation results
+        if: always()
+        env:
+          TYPECHECK_RESULT: ${{ steps.typecheck.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          EXPORT_RESULT: ${{ steps.export.outcome }}
+          AUDIT_RESULT: ${{ steps.dependency-audit.outcome }}
+        run: |
+          {
+            echo '## Required functional checks'
+            echo '| Check | Result |'
+            echo '| --- | --- |'
+            echo "| Typecheck | ${TYPECHECK_RESULT:-skipped} |"
+            echo "| Tests | ${TEST_RESULT:-skipped} |"
+            echo "| Build | ${BUILD_RESULT:-skipped} |"
+            echo "| Static export build | ${EXPORT_RESULT:-skipped} |"
+            echo
+            echo '## Informational security checks'
+            echo '| Check | Result |'
+            echo '| --- | --- |'
+            echo "| Dependency audit | ${AUDIT_RESULT:-skipped} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Require functional checks to pass
+        if: always()
+        env:
+          TYPECHECK_RESULT: ${{ steps.typecheck.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          EXPORT_RESULT: ${{ steps.export.outcome }}
+        run: |
+          for result in "$TYPECHECK_RESULT" "$TEST_RESULT" "$BUILD_RESULT" "$EXPORT_RESULT"; do
+            if [ "$result" != success ]; then
+              echo 'A required functional check failed or did not run.'
+              exit 1
+            fi
+          done
