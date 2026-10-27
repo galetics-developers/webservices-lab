@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:p="http://wslab.local/products">
+  <soap:Body>
+    <p:ListProductsRequest/>
+  </soap:Body>
+</soap:Envelope>

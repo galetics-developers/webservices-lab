@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="ProductsService"
+             targetNamespace="http://wslab.local/products"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://wslab.local/products"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <types>
+    <xsd:schema targetNamespace="http://wslab.local/products" elementFormDefault="qualified">
+      <xsd:complexType name="Product">
+        <xsd:sequence>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="name" type="xsd:string"/>
+          <xsd:element name="category" type="xsd:string"/>
+          <xsd:element name="price" type="xsd:decimal"/>
+          <xsd:element name="description" type="xsd:string"/>
+          <xsd:element name="createdAt" type="xsd:dateTime"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:element name="ListProductsRequest">
+        <xsd:complexType>
+          <xsd:sequence/>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ListProductsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="product" type="tns:Product" minOccurs="0" maxOccurs="unbounded"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetProductByIdRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="id" type="xsd:int"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetProductByIdResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="product" type="tns:Product"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="ListProductsInput">
+    <part name="parameters" element="tns:ListProductsRequest"/>
+  </message>
+  <message name="ListProductsOutput">
+    <part name="parameters" element="tns:ListProductsResponse"/>
+  </message>
+  <message name="GetProductByIdInput">
+    <part name="parameters" element="tns:GetProductByIdRequest"/>
+  </message>
+  <message name="GetProductByIdOutput">
+    <part name="parameters" element="tns:GetProductByIdResponse"/>
+  </message>
+
+  <portType name="ProductsPortType">
+    <operation name="ListProducts">
+      <documentation>Devuelve todos los productos de ejemplo.</documentation>
+      <input message="tns:ListProductsInput"/>
+      <output message="tns:ListProductsOutput"/>
+    </operation>
+    <operation name="GetProductById">
+      <documentation>Devuelve un producto por su identificador o un SOAP Fault si no existe.</documentation>
+      <input message="tns:GetProductByIdInput"/>
+      <output message="tns:GetProductByIdOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="ProductsBinding" type="tns:ProductsPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="ListProducts">
+      <soap:operation soapAction="http://wslab.local/products/ListProducts"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+    <operation name="GetProductById">
+      <soap:operation soapAction="http://wslab.local/products/GetProductById"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="ProductsService">
+    <documentation>Servicio SOAP de productos de ejemplo (práctica webservices-lab).</documentation>
+    <port name="ProductsPort" binding="tns:ProductsBinding">
+      <soap:address location="{{SERVICE_URL}}"/>
+    </port>
+  </service>
+</definitions>

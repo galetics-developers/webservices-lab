@@ -1,0 +1,19 @@
+{
+  "name": "webservices-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Práctica académica: publicación y consumo de servicios web (REST, SOAP/WSDL y RSS) en un monorepo con pnpm workspaces.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build:shared": "pnpm --filter @wslab/shared build",
+    "dev": "pnpm build:shared && pnpm --parallel --filter @wslab/backend --filter @wslab/frontend dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --parallel --filter @wslab/backend --filter @wslab/frontend start",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "test": "pnpm build:shared && pnpm --filter @wslab/backend test",
+    "verify": "pnpm typecheck && pnpm test && pnpm build"
+  }
+}
