@@ -2,6 +2,8 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp } from './helpers.js';
 
+const SEED_SIZE = 15;
+
 describe('REST /api/products (e2e)', () => {
   let app: INestApplication;
 
@@ -16,19 +18,24 @@ describe('REST /api/products (e2e)', () => {
   it('GET devuelve los productos de ejemplo en JSON', async () => {
     const res = await request(app.getHttpServer()).get('/api/products').expect(200);
     expect(res.headers['content-type']).toMatch(/application\/json/);
-    expect(res.body).toHaveLength(3);
-    expect(res.body[0]).toMatchObject({ id: 1, name: 'Teclado mecánico' });
+    expect(res.body).toHaveLength(SEED_SIZE);
+    expect(res.body[0]).toMatchObject({ id: 1, name: 'Taladro magnético de base 1200 W' });
   });
 
   it('POST agrega un producto y responde 201', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/products')
-      .send({ name: 'Mouse', category: 'Periféricos', price: 249.5 })
+      .send({ name: 'Llave de impacto neumática 1/2 pulg', category: 'Herramienta neumática', price: 4890 })
       .expect(201);
-    expect(res.body).toMatchObject({ id: 4, name: 'Mouse', price: 249.5, description: '' });
+    expect(res.body).toMatchObject({
+      id: SEED_SIZE + 1,
+      name: 'Llave de impacto neumática 1/2 pulg',
+      price: 4890,
+      description: '',
+    });
 
     const list = await request(app.getHttpServer()).get('/api/products').expect(200);
-    expect(list.body).toHaveLength(4);
+    expect(list.body).toHaveLength(SEED_SIZE + 1);
   });
 
   it('POST rechaza datos inválidos con 400', async () => {

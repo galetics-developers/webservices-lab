@@ -3,6 +3,8 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { closeServer, createTestApp, getFreePort, startLocalServer } from './helpers.js';
 
+const SEED_SIZE = 15;
+
 describe('Gateway con servicios propios (e2e)', () => {
   let app: INestApplication;
 
@@ -17,8 +19,8 @@ describe('Gateway con servicios propios (e2e)', () => {
   it('consume ListProducts del SOAP propio a través del WSDL', async () => {
     const res = await request(app.getHttpServer()).get('/api/gateway/soap/products').expect(200);
     expect(res.body).toMatchObject({ source: 'own-soap', protocol: 'SOAP', ok: true });
-    expect(res.body.data).toHaveLength(3);
-    expect(res.body.data[0]).toMatchObject({ id: 1, price: 1299 });
+    expect(res.body.data).toHaveLength(SEED_SIZE);
+    expect(res.body.data[0]).toMatchObject({ id: 1, price: 18450 });
     expect(res.body.rawRequest).toContain('ListProductsRequest');
     expect(res.body.raw).toContain('ListProductsResponse');
   });
@@ -26,10 +28,16 @@ describe('Gateway con servicios propios (e2e)', () => {
   it('consume GetProductById y refleja productos creados por REST (no lee el catálogo directo)', async () => {
     await request(app.getHttpServer())
       .post('/api/products')
-      .send({ name: 'Webcam', category: 'Video', price: 899 })
+      .send({ name: 'Nivel láser de líneas cruzadas', category: 'Medición', price: 899 })
       .expect(201);
-    const res = await request(app.getHttpServer()).get('/api/gateway/soap/products/4').expect(200);
-    expect(res.body.data).toMatchObject({ id: 4, name: 'Webcam', price: 899 });
+    const res = await request(app.getHttpServer())
+      .get(`/api/gateway/soap/products/${SEED_SIZE + 1}`)
+      .expect(200);
+    expect(res.body.data).toMatchObject({
+      id: SEED_SIZE + 1,
+      name: 'Nivel láser de líneas cruzadas',
+      price: 899,
+    });
   });
 
   it('traduce el SOAP Fault de producto inexistente a 404', async () => {
@@ -45,7 +53,7 @@ describe('Gateway con servicios propios (e2e)', () => {
   it('consume el RSS propio por HTTP', async () => {
     const res = await request(app.getHttpServer()).get('/api/gateway/rss/products').expect(200);
     expect(res.body).toMatchObject({ source: 'own-rss', protocol: 'RSS', ok: true });
-    expect(res.body.data.items.length).toBeGreaterThanOrEqual(3);
+    expect(res.body.data.items.length).toBeGreaterThanOrEqual(SEED_SIZE);
     expect(res.body.raw).toContain('<rss version="2.0"');
   });
 
@@ -63,8 +71,7 @@ describe('Gateway ante fallos de servicios externos (e2e)', () => {
 
   beforeAll(async () => {
     const closedPort = await getFreePort();
-    const slow = await startLocalServer(() => {
-    });
+    const slow = await startLocalServer(() => {});
     hanging = slow.server;
     const evil = await startLocalServer((_req, res) => {
       res.setHeader('Content-Type', 'application/rss+xml');
