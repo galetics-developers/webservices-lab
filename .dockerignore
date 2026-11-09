@@ -1,0 +1,43 @@
+# Reduce el contexto de construcción y, sobre todo, evita que secretos o
+# artefactos locales entren en la imagen.
+
+# Dependencias y artefactos: se reinstalan y recompilan dentro de la imagen
+node_modules
+**/node_modules
+.pnpm-store
+**/dist
+**/.next
+**/out
+**/*.tsbuildinfo
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+*.pem
+*.key
+*.crt
+certs/
+ssl/
+
+# Historial y automatización
+.git
+.gitignore
+.github
+
+# Documentación y resultados de pruebas
+docs
+*.md
+coverage
+reports
+evidencias
+
+# Herramientas de escritorio y de agentes
+.vscode
+.idea
+.codegraph
+.agents
+.claude
+.gemini
