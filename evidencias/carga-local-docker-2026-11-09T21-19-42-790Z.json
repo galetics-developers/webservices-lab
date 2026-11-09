@@ -1,0 +1,25 @@
+{
+  "label": "local-docker",
+  "url": "http://localhost:4000/api/products",
+  "startedAt": "2026-11-09T21:19:42.790Z",
+  "durationSeconds": 30,
+  "concurrency": 20,
+  "coldStartMs": 37,
+  "coldStartStatus": 200,
+  "requests": 228840,
+  "requestsPerSecond": 7626.4,
+  "failed": 0,
+  "errorRatePercent": 0,
+  "latencyMs": {
+    "min": 1,
+    "p50": 2,
+    "p90": 3,
+    "p95": 4,
+    "p99": 8,
+    "max": 28
+  },
+  "statusCount": {
+    "200": 228840
+  },
+  "errorCount": {}
+}
