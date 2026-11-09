@@ -41,15 +41,15 @@ export class ProductsSoapService {
     return {
       ProductsService: {
         ProductsPort: {
-          ListProducts: () => ({
-            product: this.products.findAll().map(toSoapProduct),
+          ListProducts: async () => ({
+            product: (await this.products.findAll()).map(toSoapProduct),
           }),
-          GetProductById: (args: { id?: unknown }) => {
+          GetProductById: async (args: { id?: unknown }) => {
             const id = Number(args?.id);
             if (!Number.isInteger(id) || id < 1) {
               throw soapFault('soap:Client', 'El id debe ser un entero positivo', 'INVALID_ID');
             }
-            const product = this.products.findById(id);
+            const product = await this.products.findById(id);
             if (!product) {
               throw soapFault('soap:Client', `No existe el producto con id ${id}`, 'NOT_FOUND');
             }

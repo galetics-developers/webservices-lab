@@ -14,9 +14,9 @@ export class RssController {
 
   @Get(RSS_PATH)
   @Header('Content-Type', 'application/rss+xml; charset=utf-8')
-  getFeed(): string {
+  async getFeed(): Promise<string> {
     const base = this.config.publicBaseUrl;
-    const items = this.products.findAll();
+    const items = await this.products.findAll();
 
     const feed = new Feed({
       title: 'webservices-lab: productos de ejemplo',

@@ -4,6 +4,13 @@ export const APP_CONFIG = Symbol('APP_CONFIG');
 
 export const FRONTEND_PORT = 3000;
 
+export interface DatabaseConfig {
+  url: string;
+  ssl: boolean;
+  maxConnections: number;
+  connectionTimeoutMs: number;
+}
+
 export interface AppConfig {
   port: number;
   publicBaseUrl: string;
@@ -13,6 +20,7 @@ export interface AppConfig {
   countryInfoWsdlUrl: string;
   countryInfoEndpoint: string;
   externalRssUrl: string;
+  database?: DatabaseConfig;
 }
 
 const DEFAULTS = {
@@ -26,6 +34,9 @@ const DEFAULTS = {
   COUNTRY_INFO_ENDPOINT:
     'https://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso',
   EXTERNAL_RSS_URL: 'https://feeds.bbci.co.uk/mundo/rss.xml',
+  DATABASE_SSL: 'true',
+  DATABASE_MAX_CONNECTIONS: '5',
+  DATABASE_CONNECTION_TIMEOUT_MS: '10000',
 } as const;
 
 type EnvKey = keyof typeof DEFAULTS;
@@ -60,6 +71,50 @@ function readInt(env: NodeJS.ProcessEnv, key: EnvKey, min: number, max: number):
   return value;
 }
 
+function readBool(env: NodeJS.ProcessEnv, key: EnvKey): boolean {
+  const value = read(env, key).toLowerCase();
+  if (value === 'true' || value === '1') return true;
+  if (value === 'false' || value === '0') return false;
+  throw new Error(`La variable ${key} debe ser true o false`);
+}
+
+function readPort(env: NodeJS.ProcessEnv): number {
+  const platform = env.PORT?.trim();
+  const local = env.BACKEND_PORT?.trim();
+  const source = platform ? 'PORT' : 'BACKEND_PORT';
+  const raw = platform || local || DEFAULTS.BACKEND_PORT;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1 || value > 65535) {
+    throw new Error(`La variable ${source} debe ser un entero entre 1 y 65535`);
+  }
+  return value;
+}
+
+function readDatabase(env: NodeJS.ProcessEnv): DatabaseConfig | undefined {
+  const url = env.DATABASE_URL?.trim();
+  if (!url) return undefined;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error('La variable DATABASE_URL no contiene una URL válida');
+  }
+  if (parsed.protocol !== 'postgres:' && parsed.protocol !== 'postgresql:') {
+    throw new Error('La variable DATABASE_URL debe usar el esquema postgres o postgresql');
+  }
+  if (!parsed.pathname.replace(/^\//, '')) {
+    throw new Error('La variable DATABASE_URL debe incluir el nombre de la base de datos');
+  }
+
+  return {
+    url,
+    ssl: readBool(env, 'DATABASE_SSL'),
+    maxConnections: readInt(env, 'DATABASE_MAX_CONNECTIONS', 1, 100),
+    connectionTimeoutMs: readInt(env, 'DATABASE_CONNECTION_TIMEOUT_MS', 100, 60000),
+  };
+}
+
 export function localIpv4Addresses(): string[] {
   return Object.values(networkInterfaces())
     .flat()
@@ -92,7 +147,7 @@ export function loadConfig(
   }
 
   return {
-    port: readInt(env, 'BACKEND_PORT', 1, 65535),
+    port: readPort(env),
     publicBaseUrl: publicBase.href.replace(/\/$/, ''),
     frontendOrigins: readOrigins(env, options.detectLocalNetwork ?? true),
     httpTimeoutMs: readInt(env, 'HTTP_TIMEOUT_MS', 100, 60000),
@@ -100,5 +155,6 @@ export function loadConfig(
     countryInfoWsdlUrl: readUrl(env, 'COUNTRY_INFO_WSDL_URL'),
     countryInfoEndpoint: readUrl(env, 'COUNTRY_INFO_ENDPOINT'),
     externalRssUrl: readUrl(env, 'EXTERNAL_RSS_URL'),
+    database: readDatabase(env),
   };
 }

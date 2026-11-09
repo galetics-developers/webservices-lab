@@ -8,13 +8,13 @@ export class ProductsController {
   constructor(private readonly products: ProductsService) {}
 
   @Get()
-  findAll(): Product[] {
+  findAll(): Promise<Product[]> {
     return this.products.findAll();
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateProductDto): Product {
+  create(@Body() dto: CreateProductDto): Promise<Product> {
     return this.products.create(dto);
   }
 }

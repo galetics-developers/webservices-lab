@@ -1,28 +1,29 @@
+import { InMemoryProductsStore } from './in-memory-products.store.js';
 import { ProductsService } from './products.service.js';
 
 const SEED_SIZE = 15;
 
-describe('ProductsService', () => {
+describe('ProductsService con el almacén en memoria', () => {
   let service: ProductsService;
 
   beforeEach(() => {
-    service = new ProductsService();
+    service = new ProductsService(new InMemoryProductsStore());
   });
 
-  it('inicia con los productos de ejemplo de ferretería industrial', () => {
-    expect(service.findAll()).toHaveLength(SEED_SIZE);
-    expect(service.findById(1)?.name).toBe('Taladro magnético de base 1200 W');
-    expect(service.findById(SEED_SIZE)?.name).toBe('Grasa de litio EP2 (cubeta de 19 kg)');
+  it('inicia con los productos de ejemplo de ferretería industrial', async () => {
+    expect(await service.findAll()).toHaveLength(SEED_SIZE);
+    expect((await service.findById(1))?.name).toBe('Taladro magnético de base 1200 W');
+    expect((await service.findById(SEED_SIZE))?.name).toBe('Grasa de litio EP2 (cubeta de 19 kg)');
   });
 
-  it('usa nombres e ids únicos en el catálogo de ejemplo', () => {
-    const products = service.findAll();
+  it('usa nombres e ids únicos en el catálogo de ejemplo', async () => {
+    const products = await service.findAll();
     expect(new Set(products.map((p) => p.id)).size).toBe(SEED_SIZE);
     expect(new Set(products.map((p) => p.name)).size).toBe(SEED_SIZE);
   });
 
-  it('cumple las mismas reglas que valida POST /api/products', () => {
-    for (const p of service.findAll()) {
+  it('cumple las mismas reglas que valida POST /api/products', async () => {
+    for (const p of await service.findAll()) {
       expect(p.name.length).toBeLessThanOrEqual(80);
       expect(p.category.length).toBeLessThanOrEqual(40);
       expect(p.description.length).toBeLessThanOrEqual(300);
@@ -32,23 +33,31 @@ describe('ProductsService', () => {
     }
   });
 
-  it('agrega productos con id incremental', () => {
-    const created = service.create({
+  it('cabe en las columnas declaradas en el esquema de PostgreSQL', async () => {
+    for (const p of await service.findAll()) {
+      expect(p.name.length).toBeLessThanOrEqual(80);
+      expect(p.category.length).toBeLessThanOrEqual(40);
+      expect(p.description.length).toBeLessThanOrEqual(300);
+    }
+  });
+
+  it('agrega productos con id incremental', async () => {
+    const created = await service.create({
       name: 'Llave de impacto neumática 1/2 pulg',
       category: 'Herramienta neumática',
       price: 4890,
     });
     expect(created.id).toBe(SEED_SIZE + 1);
     expect(created.description).toBe('');
-    expect(service.findAll()).toHaveLength(SEED_SIZE + 1);
+    expect(await service.findAll()).toHaveLength(SEED_SIZE + 1);
   });
 
-  it('devuelve copias para que el catálogo no se modifique desde fuera', () => {
-    service.findAll()[0].name = 'cambiado';
-    expect(service.findById(1)?.name).toBe('Taladro magnético de base 1200 W');
+  it('devuelve copias para que el catálogo no se modifique desde fuera', async () => {
+    (await service.findAll())[0].name = 'cambiado';
+    expect((await service.findById(1))?.name).toBe('Taladro magnético de base 1200 W');
   });
 
-  it('devuelve undefined si el producto no existe', () => {
-    expect(service.findById(999)).toBeUndefined();
+  it('devuelve undefined si el producto no existe', async () => {
+    expect(await service.findById(999)).toBeUndefined();
   });
 });
